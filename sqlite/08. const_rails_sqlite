@@ -1,0 +1,242 @@
+cd Desktop
+mkdir nodejs; cd $_
+
+vagrant init
+
+A `Vagrantfile` has been placed in this directory. You are now
+ready to `vagrant up` your first virtual environment! Please read
+the comments in the Vagrantfile as well as documentation on
+`vagrantup.com` for more information on using Vagrant.
+
+Vagrant.fileの編集
+
+15行目
+  config.vm.box = "base"
+	↓
+  config.vm.box = "centos/7"
+
+26行目
+  # config.vm.network "forwarded_port", guest: 80, host: 8080
+  	↓
+  config.vm.network "forwarded_port", guest: 3000, host: 3000
+
+35行目（コメントアウト外しただけ）
+  # config.vm.network "private_network", ip: "192.168.33.10"
+  	↓
+  config.vm.network "private_network", ip: "192.168.33.10"
+
+46行目
+  # config.vm.synced_folder "../data", "/vagrant_data"
+  	↓
+  config.vm.synced_folder "./", "/home/vagrant/work"
+
+以上の４行だけ編集
+
+
+つまりこれです
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "centos/7"
+  config.vm.network "forwarded_port", guest: 3000, host: 3000
+  config.vm.network "private_network", ip: "192.168.33.10"
+  config.vm.synced_folder "./", "/home/vagrant/work"
+end
+
+
+vagrant upする
+
+daisuke.shinoku@appirits-1010700noMacBook-Pro node10 % vagrant up
+
+少し時間かかる
+
+終わったらそのディレクトリから
+
+daisuke.shinoku@appirits-1010700noMacBook-Pro node10 % vagrant ssh
+
+下記のようになれば仮想環境に入れている
+[vagrant@localhost ~]$ 
+
+意図した通りのファイル構成になっているか確認
+[vagrant@localhost ~]$ ls
+work
+
+centOSの時刻をUTCからJSTへ変更
+$ sudo timedatectl set-timezone Asia/Tokyo
+
+# yumを最新版にアップデート
+$ sudo yum -y update
+
+# 必要なパッケージをインストール
+$ sudo yum -y install git-all openssl-devel readline-devel sqlite gcc gcc-c++ ImageMagick
+
+
+# gitインストール
+$ sudo yum -y install gcccurl-devel expat-devel gettext-devel openssl-devel zlib-devel perl-ExtUtils-MakeMaker
+
+# rbenvインストール
+
+# rbenv導入
+$ git clone git://github.com/sstephenson/rbenv.git ~/.rbenv
+$ git clone git://github.com/sstephenson/ruby-build.git ~/.rbenv/plugins/ruby-build
+
+# pathを通す
+$ echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+$ echo 'export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH"' >> ~/.bashrc
+$ echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+$ echo 'gem: --no-ri --no-rdoc' > ~/.gemrc
+$ exec $SHELL
+
+# 確認
+$ rbenv -v
+rbenv 1.1.2-36-g60c9339
+
+# Rubyインストール
+
+# 次のコマンドでrbenv上で安定で最新のものを確認
+$ rbenv install --list
+
+# 最新版をインストール
+$ rbenv install 2.6.6
+（ここ時間かかる）
+
+# rbenvにインストールされているversionをリストで表示
+$ rbenv versions
+
+# 環境全体のRubyバージョンを指定
+$ rbenv global 2.6.6
+
+$ rbenv versions
+* 2.6.6 (set by /home/vagrant/.rbenv/version)
+
+Nodeのとこ（Qiita記事ではうまくいかない）
+https://dara-blog.com/node-install-in-vagrantを参考に
+
+# gitを使用して、nvmをclone
+$ git clone https://github.com/creationix/nvm.git ~/.nvm
+
+# nvmをbash_profileに反映させる
+$ vi .bash_profile 
+
+
+ーーーーーーーーこの状態にするーーーーーーーー
+# .bash_profile
+
+# Get the aliases and functions
+if [ -f ~/.bashrc ]; then
+        . ~/.bashrc
+fi
+
+# for nvm
+if [[ -s ~/.nvm/nvm.sh ]];
+then source ~/.nvm/nvm.sh
+fi
+
+# User specific environment and startup programs
+
+PATH=$PATH:$HOME/.local/bin:$HOME/bin
+
+export PATH
+ーーーーーーーーこの状態にするーーーーーーーー
+
+# これでもいける？？
+
+echo -e "\nif [[ -s ~/.nvm/nvm.sh ]];\nthen source ~/.nvm/nvm.sh\nfi" >> ~/.bash_profile
+
+# 一度、仮想環境からでる
+[vagrant@localhost ~]$ exit
+exit
+Connection to 127.0.0.1 closed.
+
+# もう一回入ってインストールできたか確認
+XXX.XXX@appirits-1010700noMacBook-Pro node10 % vagrant ssh
+
+
+source ~/.bash_profileコマンドでもいけるっぽい
+
+Last login: Fri Nov  6 17:35:01 2020 from 10.0.2.2
+[vagrant@localhost ~]$ nvm help
+
+Node Version Manager (v0.36.0)
+....
+....
+....
+
+# LTS(Long Term Support)バージョンをインストールしてデフォルトに設定する
+
+$ nvm install --lts --latest-npm
+$ nvm alias default lts/*
+
+# バージョン指定したいときは、以下のようにする
+
+$ nvm install v10.18.1
+$ nvm alias default v10.18.1
+
+
+# 以下のやつが良さそう
+$ nvm install v12.18.4
+$ nvm alias default v12.18.4
+
+# gem周り
+
+# gemのシステムをアップデートする
+$ gem update --system
+
+# 各種gemをアップデートする
+$ gem update
+
+# bunderインストール
+$ gem install bundler
+
+# Railsインストール
+$ gem install rails -v 5.2.4.4
+
+# 確認
+$ rails -v
+
+# sqlite3
+$ sudo yum -y install sqlite-devel
+
+# rails作ろう
+$ [vagrant@localhost ~]$ cd work
+$ [vagrant@localhost work]$ rails new hoge
+
+
+Etc::SC_NPROCESSORS_ONLNって感じのがたくさん出てきたら
+$ gem uninstall etc
+で警告消せそう（意味はよくわからん）
+https://teratail.com/questions/248481
+
+# サーバー立ち上げよう
+$ rails server -b 0.0.0.0
+
+いつもどおりhttp://localhost:3000/アクセスする
+多分これで「ウェーイ、Railsだお」が出てくるはず
+
+Etc::SC_NPROCESSORS_ONLNって感じのがたくさん出てきたら
+$ gem uninstall etc
+で警告消せそう（意味はよくわからん）
+https://teratail.com/questions/248481
+
+まだ警告出てたら
+$ gem uninstall fileutils
+$ gem update fileutils --default
+で消せそう（これもよくわからん）
+https://obel.hatenablog.jp/entry/20181023/1540286546
+
+
+
+# 開発に入る前に
+
+これで、vagrant/work/hogeのとこにあるRailsファイル群をいじれば開発はできるが、
+その前にちょっと設定あり
+
+config/environments/development.rbの最後の方にある
+
+config.file_watcher = ActiveSupport::EventedFileUpdateChecker
+を
+config.file_watcher = ActiveSupport::FileUpdateChecker
+に置き換えてください
+
+これでローカルで行ったファイルの書き換えがすぐに反映されるので快適に開発できるはず
+
+お疲れ様でした
